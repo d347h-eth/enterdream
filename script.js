@@ -1435,9 +1435,13 @@ async function loadTerraform(reloadType) {
     });
     // decode tokenURI
     tokenURI = JSON.parse(atob(tokenURI.substring(29)));
+    let tokenAttrs = tokenURI.attributes.reduce((obj, item) => {
+        obj[item.trait_type] = item.value;
+        return obj;
+    }, {});
     // biome from tokenURI
-    let biome = tokenURI.attributes[5].value;
-    let tempMode = tokenURI.attributes[3].value;
+    let biome = tokenAttrs["Biome"];
+    let tempMode = tokenAttrs["Mode"];
 
     // get original terrain data
     terrain = "";
@@ -1481,6 +1485,8 @@ async function loadTerraform(reloadType) {
   html = html.replace(/let newSet/, `newSet`);
   html = html.replace(/let mainSet/, `mainSet`);
   html = html.replace(/let gridEls/, `gridEls`);
+  html = html.replace(/let classIds/, `classIds`);
+  html = html.replace(/let isOrigin/, `isOrigin`);
   html = html.replace(/let isDaydream/, `isDaydream`);
   html = html.replace(/const SEED/, `SEED`);
   html = html.replace(/let MODE/, `MODE`);
@@ -1505,9 +1511,9 @@ async function loadTerraform(reloadType) {
     return newMs + "ms";
   });
 
-  let script = unEscape(html.match(/\<script\>(.*?)\<\/script\>/)[1]);
+  let script = unEscape(html.match(/\<script\>(.*?)\<\/script\>/s)[1]);
 
-  script = script.replace(/Interval\(\(\)\=\>\{/, 'Interval(()=>{capture();');
+  script = script.replace(/terraLoop\(\)\{/, 'terraLoop(){capture();');
   for (var i = 1; i < 99999; i++)
     window.clearInterval(i);
   script = new Function(script);
@@ -1531,7 +1537,6 @@ async function loadTerraform(reloadType) {
   }
   // terraforming grid
   classIdsSorted = clone(classIds);
-  classIdsSorted.reverse();
   classIdsSorted.push('j');
 
   // l(".editGrid").style.backgroundColor = getComputedStyle(l(".r")).getPropertyValue('background-color');
